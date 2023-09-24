@@ -43,9 +43,13 @@ def EWS_DNB(x, window_size, padding='online', normalization='straight'):
         xs = sliding_window(x, (window_size, 1)).reshape(-1,
                                                          x.shape[1], window_size)
         cov_time_tmp = np.zeros(xs.shape[0])
+        cov_matrices = []
         for i in tqdm.tqdm(range(0, cov_time_tmp.shape[0])):
+            sigma_matrix = np.cov(xs[i]) 
             sigmas, _ = np.linalg.eigh(np.cov(xs[i]))
             cov_time_tmp[i] = sigmas.max()
+            cov_matrices.append(sigma_matrix) 
+    
 
     if padding == 'same':
         # padding marage data using the edge
@@ -53,15 +57,15 @@ def EWS_DNB(x, window_size, padding='online', normalization='straight'):
         cov_time[window_size//2:-window_size//2+1] = cov_time_tmp
         cov_time[:window_size//2] = cov_time_tmp[0]
         cov_time[-window_size//2+1:] = cov_time_tmp[-1]
-        return cov_time
+        return cov_time, cov_matrices
     elif padding == 'online':
         # cov_time[t] is calculated as time-sereis data t - window_size : t
         cov_time = np.zeros(x.shape[0])
         cov_time[:window_size-1] = cov_time_tmp[0]
         cov_time[window_size-1:] = cov_time_tmp
-        return cov_time
+        return cov_time, cov_matrices
     elif padding == 'valid':
-        return cov_time_tmp
+        return cov_time_tmp, cov_matrices
     else:
         raise NameError('select \'same\', \'online\', or \'valid\' ')
         return -1
